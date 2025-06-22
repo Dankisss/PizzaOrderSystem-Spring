@@ -1,11 +1,13 @@
 package com.deliciouspizza.model.product;
 
+import com.deliciouspizza.model.order.Order;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @Table(name = "products")
@@ -43,8 +45,13 @@ public abstract class Product {
     @Column(name = "updated_at")
     private Instant updatedAt = Instant.now();
 
-    public Product() {
-    }
+    @ManyToMany
+    @JoinTable(
+            name = "orders_items",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "order_id")
+    )
+    private Set<Order> orders;
 
     public Product(ProductCategory category, ProductStatus status, ProductSize size, BigDecimal price, boolean active, BigDecimal totalAmount) {
         this.category = category;

@@ -1,4 +1,4 @@
-CREATE TABLE USERS (
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE USERS (
     profile_image_url VARCHAR(100)
 );
 
-CREATE TABLE ORDERS (
+CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     status VARCHAR(20) DEFAULT 'PENDING',
     user_id INT NOT NULL REFERENCES USERS(id),
@@ -20,12 +20,13 @@ CREATE TABLE ORDERS (
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES USERS(id)
 );
 
-CREATE TABLE PRODUCTS (
+CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     status VARCHAR(20) DEFAULT 'ACTIVE',
     category VARCHAR(20) NOT NULL,
     capacity VARCHAR(20) NOT NULL,
     pizza_type VARCHAR(30),
+    drink_type VARCHAR(30),
     is_alcoholic BOOLEAN,
     price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN,
@@ -35,7 +36,7 @@ CREATE TABLE PRODUCTS (
     CONSTRAINT chk_capacity CHECK(capacity IN ('SMALL', 'MEDIUM', 'LARGE', '330ML', '500ML'))
 );
 
-CREATE TABLE ORDER_ITEMS (
+CREATE TABLE orders_items (
     id SERIAL PRIMARY KEY,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
