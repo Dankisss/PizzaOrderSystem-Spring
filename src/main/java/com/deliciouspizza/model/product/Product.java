@@ -3,6 +3,7 @@ package com.deliciouspizza.model.product;
 import com.deliciouspizza.model.order.Order;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ import java.util.Set;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "category", discriminatorType = DiscriminatorType.STRING)
 @NoArgsConstructor
+@Data
 public abstract class Product {
 
     @Id @GeneratedValue
@@ -52,6 +54,8 @@ public abstract class Product {
             inverseJoinColumns = @JoinColumn(name = "order_id")
     )
     private Set<Order> orders;
+
+    private byte[] imageData;
 
     public Product(ProductCategory category, ProductStatus status, ProductSize size, BigDecimal price, boolean active, BigDecimal totalAmount) {
         this.category = category;

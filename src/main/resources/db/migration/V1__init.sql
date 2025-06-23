@@ -7,7 +7,7 @@ CREATE TABLE users (
     is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    profile_image_url VARCHAR(100)
+    image_data BYTEA
 );
 
 CREATE TABLE orders (
@@ -31,12 +31,13 @@ CREATE TABLE products (
     price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN,
     total_amount NUMERIC(10, 2) DEFAULT 0,
+    image_data BYTEA,
     CONSTRAINT chk_status CHECK(status in ('ACTIVE', 'INACTIVE')),
     CONSTRAINT chk_category CHECK(category IN ('PIZZA', 'DRINK', 'SAUCE')),
     CONSTRAINT chk_capacity CHECK(capacity IN ('SMALL', 'MEDIUM', 'LARGE', '330ML', '500ML'))
 );
 
-CREATE TABLE orders_items (
+CREATE TABLE orders_products (
     id SERIAL PRIMARY KEY,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
