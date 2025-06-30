@@ -28,14 +28,16 @@ CREATE TABLE products (
     status VARCHAR(20) DEFAULT 'ACTIVE',
     category VARCHAR(20) NOT NULL,
     capacity VARCHAR(20) NOT NULL,
-    is_alcoholic BOOLEAN,
+    alcoholic BOOLEAN,
     price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN,
     total_amount NUMERIC(10, 2) DEFAULT 0,
     image_data BYTEA,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_status CHECK(status in ('ACTIVE', 'INACTIVE')),
     CONSTRAINT chk_category CHECK(category IN ('PIZZA', 'DRINK', 'SAUCE')),
-    CONSTRAINT chk_capacity CHECK(capacity IN ('SMALL', 'MEDIUM', 'LARGE', '330ML', '500ML'))
+    CONSTRAINT chk_capacity CHECK(capacity IN ('SMALL', 'MEDIUM', 'LARGE', '_330ML', '_500ML'))
 );
 
 CREATE TABLE orders_products (
