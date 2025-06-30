@@ -13,7 +13,15 @@ public class Sauce extends Product {
         super();
     }
 
-    public Sauce(ProductStatus status, String name, String description, ProductSize size, BigDecimal price, boolean isActive, BigDecimal totalAmount) {
+    public Sauce(
+            ProductStatus status,
+            String name,
+            String description,
+            ProductSize size,
+            BigDecimal price,
+            boolean isActive,
+            BigDecimal totalAmount
+    ) {
         super(ProductCategory.SAUCE, name, description, status, size, price, isActive, totalAmount);
     }
 }

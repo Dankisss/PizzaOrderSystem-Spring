@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,13 +33,16 @@ import java.util.Set;
 public abstract class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "products_id_seq_generator")
+    @SequenceGenerator(name = "products_id_seq_generator", sequenceName = "products_id_seq", allocationSize = 1)
+    @Column(name = "id")
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    private String description; // Can be nullable if not @Column(nullable = false)
+    @Column
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -71,17 +75,27 @@ public abstract class Product {
 
     private byte[] imageData;
 
-    public Product(ProductCategory category, String name, String description, ProductStatus status, ProductSize capacity, BigDecimal price, boolean active, BigDecimal totalAmount) {
+    public Product(
+            ProductCategory category,
+            String name,
+            String description,
+            ProductStatus status,
+            ProductSize size,
+            BigDecimal price,
+            boolean active,
+            BigDecimal totalAmount
+    ) {
         this.category = category;
         this.name = name;
         this.description = description;
         this.status = status;
-        this.capacity = capacity;
+        this.capacity = size;
         this.price = price;
         this.active = active;
         this.totalAmount = totalAmount;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+
 }
 
