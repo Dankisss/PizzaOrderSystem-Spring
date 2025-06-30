@@ -4,6 +4,7 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -12,6 +13,7 @@ import java.math.BigDecimal;
 @DiscriminatorValue("DRINK")
 @Getter
 @Setter
+@NoArgsConstructor
 public class Drink extends Product {
 
     private Boolean alcoholic;
@@ -19,13 +21,14 @@ public class Drink extends Product {
     public Drink(
             ProductStatus status,
             String name,
+            String description,
             ProductSize size,
             BigDecimal price,
             boolean isActive,
             BigDecimal totalAmount,
             boolean alcoholic
     ) {
-        super(ProductCategory.PIZZA, name, status, size, price, isActive, totalAmount);
+        super(ProductCategory.DRINK, name, description, status, size, price, isActive, totalAmount);
         this.alcoholic = alcoholic;
     }
 
