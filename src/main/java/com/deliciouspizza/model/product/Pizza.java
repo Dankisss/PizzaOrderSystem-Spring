@@ -9,17 +9,15 @@ import java.math.BigDecimal;
 @DiscriminatorValue("PIZZA")
 public class Pizza extends Product {
 
-    private String pizzaType;
-
     public Pizza(
             ProductStatus status,
+            String name,
             ProductSize size,
             BigDecimal price,
             boolean isActive,
-            BigDecimal totalAmount,
-            String pizzaType
+            BigDecimal totalAmount
     ) {
-        super(ProductCategory.PIZZA, status, size, price, isActive, totalAmount);
-        this.pizzaType = pizzaType;
+        super(ProductCategory.PIZZA, name, status, size, price, isActive, totalAmount);
     }
+
 }

@@ -2,6 +2,7 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
+    address VARCHAR(100),
     password_hash VARCHAR(256) NOT NULL,
     role VARCHAR(30) NOT NULL DEFAULT 'CUSTOMER',
     is_active BOOLEAN NOT NULL DEFAULT true,
@@ -22,11 +23,11 @@ CREATE TABLE orders (
 
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(200),
     status VARCHAR(20) DEFAULT 'ACTIVE',
     category VARCHAR(20) NOT NULL,
     capacity VARCHAR(20) NOT NULL,
-    pizza_type VARCHAR(30),
-    drink_type VARCHAR(30),
     is_alcoholic BOOLEAN,
     price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN,
