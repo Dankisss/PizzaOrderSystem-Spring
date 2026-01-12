@@ -5,8 +5,10 @@ import com.deliciouspizza.dto.order.OrderRequestDto;
 import com.deliciouspizza.dto.order.OrderResponseDto;
 import com.deliciouspizza.dto.order.OrderUpdateDto;
 import com.deliciouspizza.dto.order.ProcessOrderRequestDto;
+import com.deliciouspizza.dto.order.ProcessOrderResponseDto;
 import com.deliciouspizza.dto.order_product.OrderProductRequestDto;
 import com.deliciouspizza.dto.order_product.OrderProductResponseDto;
+import com.deliciouspizza.exception.FailedCalculationException;
 import com.deliciouspizza.exception.InvalidCountException;
 import com.deliciouspizza.exception.OrderNotFoundException;
 import com.deliciouspizza.exception.OrderNotProcessedException;
@@ -43,23 +45,26 @@ import java.util.stream.Collectors;
 @Service
 public class OrderService {
 
+    private static final int AVERAGE_CAR_SPEED = 30;
+
     private final OrderRepository orderRepository;
     private final OrderProductRepository orderProductRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-    private final OpenRouteService openRouteService;
+//    private final OpenRouteService openRouteService;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderProductRepository orderProductRepository,
             ProductRepository productRepository,
-            UserRepository userRepository,
-            OpenRouteService openRouteService) {
+            UserRepository userRepository
+//            OpenRouteService openRouteService
+    ) {
         this.orderRepository = orderRepository;
         this.orderProductRepository = orderProductRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
-        this.openRouteService = openRouteService;
+//        this.openRouteService = openRouteService;
     }
 
     public List<OrderResponseDto> findAllOrders(OrderFilterDto filterDto) {
@@ -260,10 +265,10 @@ public class OrderService {
     /**
      * Removes a product from a specific order by deleting the OrderProduct association.
      *
-     * @param orderId The ID of the order from which to remove the product.
+     * @param orderId   The ID of the order from which to remove the product.
      * @param productId The ID of the product to remove.
      * @throws OrderProductNotFoundException if the order does not exist, or if the product
-     * is not found within that specific order.
+     *                                       is not found within that specific order.
      */
     @Transactional
     public void removeProductFromOrder(long orderId, long productId) {
@@ -320,13 +325,13 @@ public class OrderService {
         orderProductRepository.saveAndFlush(orderProduct);
 
         return new OrderResponseDto(
-             order.getId(),
-             order.getStatus().toString(),
-             order.getUser().getId(),
-             order.getAddress(),
-             order.getCreatedAt(),
-             order.getUpdatedAt(),
-             findItemsByOrderId(orderId)
+                order.getId(),
+                order.getStatus().toString(),
+                order.getUser().getId(),
+                order.getAddress(),
+                order.getCreatedAt(),
+                order.getUpdatedAt(),
+                findItemsByOrderId(orderId)
         );
     }
 
@@ -394,14 +399,14 @@ public class OrderService {
      * Processes an order, changing its status to PROCESSING and calculating delivery distance.
      *
      * @param orderId    The ID of the order to process.
-     * @param employeeId The ID of the employee processing the order.
+     * @param requestDto The ID of the employee processing the order wrapped up in a Dto.
      * @return The updated OrderResponseDTO.
      * @throws OrderNotFoundException If the order does not exist.
-     * @throws UserNotFoundException If the employee user does not exist.
-     * @throws IllegalStateException If the order cannot be processed (e.g., wrong status).
+     * @throws UserNotFoundException  If the employee user does not exist.
+     * @throws IllegalStateException  If the order cannot be processed (e.g., wrong status).
      */
     @org.springframework.transaction.annotation.Transactional
-    public OrderResponseDto processOrder(long orderId, ProcessOrderRequestDto requestDto) {
+    public ProcessOrderResponseDto processOrder(long orderId, ProcessOrderRequestDto requestDto) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
 
@@ -417,24 +422,25 @@ public class OrderService {
         String employeeAddress = employee.getAddress();
         String orderAddress = order.getAddress();
 
-        Double calculatedDistance;
+        double calculatedDistance = 0.0;
 
         try {
-            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates(employeeAddress);
-            Mono<List<Double>> orderCoordsMono = openRouteService.getCoordinates(orderAddress);
+//            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates(employeeAddress);
+//            Mono<List<Double>> orderCoordsMono = openRouteService.getCoordinates(orderAddress);
 
-            List<Double> employeeCoordinates = employeeCoordsMono.block();
-            List<Double> orderCoordinates = orderCoordsMono.block();
+//            List<Double> employeeCoordinates = employeeCoordsMono.block();
+//            List<Double> orderCoordinates = orderCoordsMono.block();
 
-            if (employeeCoordinates != null && employeeCoordinates.size() == 2 &&
-                    orderCoordinates != null && orderCoordinates.size() == 2) {
-                calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
-//                logger.info(String.format("Calculated distance for order %d: %.2f meters", orderId, calculatedDistance));
-            } else {
-//                logger.warning(String.format("Could not get coordinates for order %d or employee %d. Distance not calculated.", orderId, employeeId));
-            }
+//            if (employeeCoordinates != null && employeeCoordinates.size() == 2 &&
+//                    orderCoordinates != null && orderCoordinates.size() == 2) {
+////                calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
+////                logger.info(String.format("Calculated distance for order %d: %.2f meters", orderId, calculatedDistance));
+//            } else {
+////                logger.warning(String.format("Could not get coordinates for order %d or employee %d. Distance not calculated.", orderId, employeeId));
+//            }
 
         } catch (Exception e) {
+            throw new FailedCalculationException("An error occurred while calculating the distance", e);
 //            logger.severe("Failed to calculate distance for order " + orderId + ": " + e.getMessage());
         }
 
@@ -443,7 +449,8 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         List<OrderProductResponseDto> orderItems = findItemsByOrderId(orderId);
-        return new OrderResponseDto(
+
+        OrderResponseDto responseDto = new OrderResponseDto(
                 savedOrder.getId(),
                 savedOrder.getStatus().toString(),
                 savedOrder.getUser().getId(),
@@ -452,6 +459,13 @@ public class OrderService {
                 savedOrder.getUpdatedAt(),
                 orderItems
         );
+
+        return new ProcessOrderResponseDto(
+                responseDto,
+                calculatedDistance + " km",
+                (calculatedDistance / AVERAGE_CAR_SPEED) + " minutes"
+        );
+
     }
 
 }

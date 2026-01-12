@@ -2,11 +2,21 @@ package com.deliciouspizza.service;
 
 import com.deliciouspizza.dto.user.UserInputDto;
 import com.deliciouspizza.dto.user.UserUpdateDto;
+import com.deliciouspizza.dto.user.login.LoginInputDto;
+import com.deliciouspizza.dto.user.login.LoginOutputDto;
 import com.deliciouspizza.exception.UserAlreadyExistsException;
 import com.deliciouspizza.exception.UserNotFoundException;
 import com.deliciouspizza.model.user.User;
 import com.deliciouspizza.model.user.UserRole;
 import com.deliciouspizza.repository.UserRepository;
+import com.deliciouspizza.security.jwt.JwtService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,10 +28,19 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtService jwtService
+    ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     public User registerNewUser(UserInputDto userInputDto) {
@@ -39,7 +58,7 @@ public class UserService {
         newUser.setUsername(userInputDto.getUsername());
         newUser.setPasswordHash(passwordEncoder.encode(userInputDto.getPassword()));
         newUser.setEmail(userInputDto.getEmail());
-
+        newUser.setActive(true);
         newUser.setRole(newRole);
 
         return userRepository.saveAndFlush(newUser);
@@ -88,5 +107,35 @@ public class UserService {
             throw new RuntimeException("An error occurred while getting the bytes from the image");
         }
 
+    }
+
+    public LoginOutputDto login(LoginInputDto loginInputDto) {
+        String jwtToken = "";
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginInputDto.getUsername(), loginInputDto.getPassword())
+            );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+
+        User user = userRepository
+                .findByUsername(loginInputDto.getUsername())
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                String.format("String with username: %s was not found", userDetails.getUsername()
+                                )));
+
+        jwtToken = jwtService.generateToken(userDetails, user.getRole().name());
+
+        } catch (BadCredentialsException e) {
+            e.printStackTrace();
+        } catch (DisabledException e) {
+            // user.isActive is false!
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace(); // See the full stack trace
+        }
+
+        return new LoginOutputDto(jwtToken);
     }
 }
