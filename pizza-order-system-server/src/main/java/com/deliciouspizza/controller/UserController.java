@@ -2,10 +2,17 @@ package com.deliciouspizza.controller;
 
 import com.deliciouspizza.dto.user.UserInputDto;
 import com.deliciouspizza.dto.user.UserUpdateDto;
+import com.deliciouspizza.dto.user.login.LoginInputDto;
+import com.deliciouspizza.dto.user.login.LoginOutputDto;
 import com.deliciouspizza.model.user.User;
 import com.deliciouspizza.service.UserService;
+import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +48,11 @@ public class UserController {
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginOutputDto> login(@RequestBody LoginInputDto request) {
+        return ResponseEntity.ok(userService.login(request));
+    }
+
     /**
      * Endpoint to upload or update a user's profile photo.
      *
@@ -62,10 +74,5 @@ public class UserController {
 
     }
 
-// TODO: This should be implemented using JWT authorization
-//    @PostMapping("/auth/login")
-//    public ResponseEntity<User> signIn() {
-//
-//    }
 
 }

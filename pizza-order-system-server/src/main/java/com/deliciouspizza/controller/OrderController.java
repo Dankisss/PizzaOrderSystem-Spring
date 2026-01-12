@@ -5,10 +5,12 @@ import com.deliciouspizza.dto.order.OrderRequestDto;
 import com.deliciouspizza.dto.order.OrderResponseDto;
 import com.deliciouspizza.dto.order.OrderUpdateDto;
 import com.deliciouspizza.dto.order.ProcessOrderRequestDto;
+import com.deliciouspizza.dto.order.ProcessOrderResponseDto;
 import com.deliciouspizza.dto.order_product.OrderProductRequestDto;
 import com.deliciouspizza.dto.order_product.OrderProductResponseDto;
 import com.deliciouspizza.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
@@ -61,7 +63,7 @@ public class OrderController {
      * @return The created OrderResponseDto with a 201 status, or 400 if validation fails.
      */
     @PostMapping
-    public ResponseEntity<OrderResponseDto> createNewOrder(@Valid @RequestBody OrderRequestDto orderDto) {
+    public ResponseEntity<OrderResponseDto> createNewOrder(@Validated @RequestBody OrderRequestDto orderDto) {
 
         return new ResponseEntity<>(orderService.createNewOrder(orderDto), HttpStatus.CREATED);
     }
@@ -149,8 +151,10 @@ public class OrderController {
     }
 
     @PatchMapping("/{orderId}")
-    public ResponseEntity<OrderResponseDto> processOrder(@PathVariable long orderId, @RequestBody ProcessOrderRequestDto requestDto) {
-        return ResponseEntity.ok(orderService.processOrder(orderId, requestDto));
+    public ResponseEntity<ProcessOrderResponseDto> processOrder(@PathVariable long orderId, @RequestBody ProcessOrderRequestDto requestDto) {
+        ProcessOrderResponseDto response = orderService.processOrder(orderId, requestDto);
+
+        return ResponseEntity.ok(response);
     }
     // You could also consider adding:
     // - PATCH /api/v1/orders/{orderId}/products/{productId} to update quantity of an product
