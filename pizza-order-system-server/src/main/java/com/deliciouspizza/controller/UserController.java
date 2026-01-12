@@ -9,6 +9,7 @@ import com.deliciouspizza.service.UserService;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,11 +40,13 @@ public class UserController {
 
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<User> updateUser(@PathVariable long id, @RequestBody UserUpdateDto user) {
         return ResponseEntity.ok(userService.updateUser(id, user));
     }
 
     @PatchMapping("/{id}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<User> deactivateUser(@PathVariable long id) {
         return ResponseEntity.ok(userService.deactivateUser(id));
     }
@@ -60,19 +63,19 @@ public class UserController {
      * @param photo The MultipartFile representing the uploaded photo.
      * @return ResponseEntity with the updated User object or an error status.
      */
-    @PatchMapping("/{id}/photo") // Specific endpoint for photo upload/update
+    @PatchMapping("/{id}/photo")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<User> uploadUserPhoto(
             @PathVariable long id,
             @RequestPart MultipartFile photo) {
 
         if (photo.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // Or a more specific error DTO
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         User updatedUser = userService.uploadUserPhoto(id, photo);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
 
     }
-
 
 }

@@ -8,6 +8,7 @@ import com.deliciouspizza.model.product.Product;
 import com.deliciouspizza.service.ProductService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -98,6 +99,7 @@ public class ProductController {
      * @throws RuntimeException if there is an issue reading the uploaded photo.
      */
     @PostMapping
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ProductResponseDto> createProduct(
             @Validated @RequestPart("request") ProductInputDto request,
             @RequestPart(value = "photo", required = false) MultipartFile photo) {
@@ -142,6 +144,7 @@ public class ProductController {
      * validation fails, resulting in an {@code HttpStatus.BAD_REQUEST} (400) response.
      */
     @PatchMapping(value = "/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ProductResponseDto> updateProduct(
             @PathVariable long id,
             @Validated @RequestPart("request") ProductUpdateDto requestDto,
@@ -163,6 +166,7 @@ public class ProductController {
      * resulting in an {@code HttpStatus.NOT_FOUND} (404) response.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Void> deleteProduct(@PathVariable long id) {
         productService.deleteById(id);
         return ResponseEntity.noContent().build();

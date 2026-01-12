@@ -120,6 +120,7 @@ public class ProductService {
         }
 
         productRepository.saveAndFlush(newProduct);
+
         return mapProductToProductResponseDto(newProduct);
     }
 

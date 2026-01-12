@@ -1,5 +1,6 @@
 package com.deliciouspizza.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -11,4 +12,15 @@ public class TestController {
         return "Hello world!";
     }
 
+    @GetMapping("/test-customer")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public String testCustomer() {
+        return "Hello, Customer!";
+    }
+
+    @GetMapping("/test-employee")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public String testEmployee() {
+        return "Hello, employee";
+    }
 }

@@ -10,6 +10,7 @@ import com.deliciouspizza.dto.order_product.OrderProductRequestDto;
 import com.deliciouspizza.dto.order_product.OrderProductResponseDto;
 import com.deliciouspizza.service.OrderService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,11 +64,11 @@ public class OrderController {
      * @return The created OrderResponseDto with a 201 status, or 400 if validation fails.
      */
     @PostMapping
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderResponseDto> createNewOrder(@Validated @RequestBody OrderRequestDto orderDto) {
 
         return new ResponseEntity<>(orderService.createNewOrder(orderDto), HttpStatus.CREATED);
     }
-
 
     /**
      * Updates an existing order's status and/or address.
@@ -77,6 +78,7 @@ public class OrderController {
      * @return The updated OrderResponseDto, or 404 if not found, 400 if invalid input.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<OrderResponseDto> updateOrder(@PathVariable long id, @Valid @RequestBody OrderUpdateDto orderUpdateDto) {
         OrderResponseDto updatedOrder = orderService.updateOrder(id, orderUpdateDto);
         if (updatedOrder != null) {
@@ -92,6 +94,7 @@ public class OrderController {
      * @return 204 No Content on successful deletion, or 404 if not found.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Void> deleteOrder(@PathVariable long id) {
         orderService.deleteOrder(id);
 
@@ -121,6 +124,7 @@ public class OrderController {
      * @return The updated OrderResponseDto, or 404 if order/product not found, 400 if invalid input.
      */
     @PostMapping("/{id}/products")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderResponseDto> addProductToOrder(@PathVariable long id, @Valid @RequestBody OrderProductRequestDto productDto) {
         OrderResponseDto updatedOrder = orderService.addProductToOrder(id, productDto);
 
@@ -139,6 +143,7 @@ public class OrderController {
      * @return 204 No Content on successful removal, or 404 if order/product not found.
      */
     @DeleteMapping("/{orderId}/products/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<Void> removeProductFromOrder(@PathVariable long orderId, @PathVariable long productId) {
         orderService.removeProductFromOrder(orderId, productId);
 
@@ -146,22 +151,17 @@ public class OrderController {
     }
     
     @PatchMapping("/{orderId}/products/{productId}")
+    @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderProductResponseDto> updateCount(@PathVariable long orderId, @PathVariable long productId, @RequestParam int newCount) {
         return ResponseEntity.ok(orderService.updateProductCount(orderId, productId, newCount));
     }
 
     @PatchMapping("/{orderId}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<ProcessOrderResponseDto> processOrder(@PathVariable long orderId, @RequestBody ProcessOrderRequestDto requestDto) {
         ProcessOrderResponseDto response = orderService.processOrder(orderId, requestDto);
 
         return ResponseEntity.ok(response);
     }
-    // You could also consider adding:
-    // - PATCH /api/v1/orders/{orderId}/products/{productId} to update quantity of an product
 
-    // TODO: This should be implemented using JWT authorization
-    //    @PostMapping("/auth/login")
-    //    public ResponseEntity<User> signIn() {
-    //
-    //    }
 }

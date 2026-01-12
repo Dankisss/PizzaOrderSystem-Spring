@@ -139,8 +139,6 @@ public class ProductControllerIntegrationTest {
         return dto;
     }
 
-    // --- Tests for GET /api/v1/products (getAllProducts) ---
-
     @Test
     void getAllProducts_shouldReturnAllProducts_whenNoFilters() throws Exception {
         createPizzaInDb("Margherita Pizza", "Classic Italian", new BigDecimal("15.00"), ProductSize.MEDIUM);
@@ -195,8 +193,6 @@ public class ProductControllerIntegrationTest {
                 .andExpect(jsonPath("$[0].name").value("Active Pizza"))
                 .andExpect(jsonPath("$[0].active").value(true));
     }
-
-    // --- Tests for GET /api/v1/products/{id} (getProduct) ---
 
     @Test
     void getProduct_shouldReturnProduct_whenIdExists() throws Exception {

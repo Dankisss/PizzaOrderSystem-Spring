@@ -27,7 +27,7 @@ CREATE TABLE products (
     description VARCHAR(200),
     status VARCHAR(20) DEFAULT 'ACTIVE',
     category VARCHAR(20) NOT NULL,
-    capacity VARCHAR(20) NOT NULL,
+    capacity VARCHAR(20),
     alcoholic BOOLEAN,
     price NUMERIC(10, 2) NOT NULL,
     is_active BOOLEAN,

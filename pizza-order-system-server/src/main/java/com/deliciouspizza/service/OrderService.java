@@ -1,5 +1,6 @@
 package com.deliciouspizza.service;
 
+import com.deliciouspizza.dto.geocode.CalculatedDistance;
 import com.deliciouspizza.dto.order.OrderFilterDto;
 import com.deliciouspizza.dto.order.OrderRequestDto;
 import com.deliciouspizza.dto.order.OrderResponseDto;
@@ -32,39 +33,40 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
 
-    private static final int AVERAGE_CAR_SPEED = 30;
+    private static final int AVERAGE_CAR_SPEED = 50;
+    private static final double METERS_IN_KILOMETER = 1000.0;
+
+    private static final Logger logger = Logger.getLogger(OrderService.class.getName());
 
     private final OrderRepository orderRepository;
     private final OrderProductRepository orderProductRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
-//    private final OpenRouteService openRouteService;
+    private final OpenRouteService openRouteService;
 
     public OrderService(
             OrderRepository orderRepository,
             OrderProductRepository orderProductRepository,
             ProductRepository productRepository,
-            UserRepository userRepository
-//            OpenRouteService openRouteService
+            UserRepository userRepository,
+            OpenRouteService openRouteService
     ) {
         this.orderRepository = orderRepository;
         this.orderProductRepository = orderProductRepository;
         this.productRepository = productRepository;
         this.userRepository = userRepository;
-//        this.openRouteService = openRouteService;
+        this.openRouteService = openRouteService;
     }
 
     public List<OrderResponseDto> findAllOrders(OrderFilterDto filterDto) {
@@ -91,6 +93,10 @@ public class OrderService {
 
             if (filterDto.getCreatedBefore() != null) {
                 predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("createdAt"), filterDto.getCreatedBefore()));
+            }
+
+            if (filterDto.getStatus() != null) {
+                predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("status"), filterDto.getStatus()));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
@@ -178,6 +184,7 @@ public class OrderService {
         return new OrderProductResponseDto(
                 orderProduct.getId(),
                 orderProduct.getProduct().getId(),
+                orderProduct.getProduct().getName(),
                 orderProduct.getQuantity(),
                 orderProduct.getPriceAtOrderTime()
         );
@@ -247,6 +254,7 @@ public class OrderService {
         return new OrderProductResponseDto(
                 orderId,
                 productId,
+                orderProduct.getProduct().getName(),
                 newCount,
                 orderProduct.getPriceAtOrderTime()
         );
@@ -422,22 +430,23 @@ public class OrderService {
         String employeeAddress = employee.getAddress();
         String orderAddress = order.getAddress();
 
-        double calculatedDistance = 0.0;
+        CalculatedDistance calculatedDistance = new CalculatedDistance();
 
         try {
-//            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates(employeeAddress);
-//            Mono<List<Double>> orderCoordsMono = openRouteService.getCoordinates(orderAddress);
+            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates(employeeAddress);
+            Mono<List<Double>> orderCoordsMono = openRouteService.getCoordinates(orderAddress);
 
-//            List<Double> employeeCoordinates = employeeCoordsMono.block();
-//            List<Double> orderCoordinates = orderCoordsMono.block();
+            List<Double> employeeCoordinates = employeeCoordsMono.block();
+            List<Double> orderCoordinates = orderCoordsMono.block();
 
-//            if (employeeCoordinates != null && employeeCoordinates.size() == 2 &&
-//                    orderCoordinates != null && orderCoordinates.size() == 2) {
-////                calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
-////                logger.info(String.format("Calculated distance for order %d: %.2f meters", orderId, calculatedDistance));
-//            } else {
-////                logger.warning(String.format("Could not get coordinates for order %d or employee %d. Distance not calculated.", orderId, employeeId));
-//            }
+            if (employeeCoordinates != null && employeeCoordinates.size() == 2 &&
+                    orderCoordinates != null && orderCoordinates.size() == 2) {
+                calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
+
+                logger.info(String.format("Calculated distance for order %d: %.2f meters", orderId, calculatedDistance.getDistance()));
+            } else {
+//                logger.warning(String.format("Could not get coordinates for order %d or employee %d. Distance not calculated.", orderId, employeeId));
+            }
 
         } catch (Exception e) {
             throw new FailedCalculationException("An error occurred while calculating the distance", e);
@@ -462,8 +471,8 @@ public class OrderService {
 
         return new ProcessOrderResponseDto(
                 responseDto,
-                calculatedDistance + " km",
-                (calculatedDistance / AVERAGE_CAR_SPEED) + " minutes"
+                String.valueOf(calculatedDistance.getDistance()),
+                String.valueOf(calculatedDistance.getDuration() / AVERAGE_CAR_SPEED)
         );
 
     }

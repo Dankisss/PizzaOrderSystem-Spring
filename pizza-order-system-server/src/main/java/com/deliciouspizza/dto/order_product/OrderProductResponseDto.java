@@ -14,6 +14,7 @@ public class OrderProductResponseDto {
 
     private long orderId;
     private long productId;
+    private String productName;
     private Integer quantity;
     private BigDecimal priceAtOrderTime;
 

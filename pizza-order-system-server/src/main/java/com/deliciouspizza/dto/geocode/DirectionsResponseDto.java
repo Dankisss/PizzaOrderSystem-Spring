@@ -1,32 +1,32 @@
 package com.deliciouspizza.dto.geocode;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DirectionsResponseDto {
+    private List<Feature> features;
 
-    private List<Route> routes;
-
-    @JsonIgnoreProperties(ignoreUnknown = true)
     @Data
-    @AllArgsConstructor
-    public static class Route {
-
-        private Summary summary;
-
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Feature {
+        private Properties properties;
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)
     @Data
-    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class Properties {
+        private Summary summary;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Summary {
-
         private Double distance;
-
+        private Double duration;
     }
 }

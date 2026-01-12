@@ -16,7 +16,7 @@ public class OrderResponseDto {
 
     private Long id;
     private String status;
-    private Long userId; // Consider UserResponseDTO for full user details
+    private Long userId;
     private String address;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

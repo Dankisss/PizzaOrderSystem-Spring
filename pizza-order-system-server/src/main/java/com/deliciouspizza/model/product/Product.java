@@ -60,6 +60,7 @@ public abstract class Product {
     private ProductCategory category;
 
     @Enumerated(EnumType.STRING)
+    @Column
     private ProductSize capacity;
 
     @Column(nullable = false, precision = 10, scale = 2)

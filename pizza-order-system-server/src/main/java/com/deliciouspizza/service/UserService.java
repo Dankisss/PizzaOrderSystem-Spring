@@ -116,16 +116,22 @@ public class UserService {
                     new UsernamePasswordAuthenticationToken(loginInputDto.getUsername(), loginInputDto.getPassword())
             );
 
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        User user = userRepository
-                .findByUsername(loginInputDto.getUsername())
-                .orElseThrow(() ->
-                        new UserNotFoundException(
-                                String.format("String with username: %s was not found", userDetails.getUsername()
-                                )));
+            User user = userRepository
+                    .findByUsername(loginInputDto.getUsername())
+                    .orElseThrow(() ->
+                            new UserNotFoundException(
+                                    String.format("String with username: %s was not found", userDetails.getUsername()
+                                    )));
 
-        jwtToken = jwtService.generateToken(userDetails, user.getRole().name());
+            jwtToken = jwtService.generateToken(userDetails, user.getRole().name());
+
+            return new LoginOutputDto(
+                    jwtToken,
+                    user.getRole().name(),
+                    user.getId()
+            );
 
         } catch (BadCredentialsException e) {
             e.printStackTrace();
@@ -136,6 +142,6 @@ public class UserService {
             e.printStackTrace(); // See the full stack trace
         }
 
-        return new LoginOutputDto(jwtToken);
+        return null;
     }
 }

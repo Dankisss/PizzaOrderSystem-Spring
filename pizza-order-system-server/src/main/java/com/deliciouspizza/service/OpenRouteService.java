@@ -1,11 +1,12 @@
 package com.deliciouspizza.service;
 
+import com.deliciouspizza.dto.geocode.CalculatedDistance;
 import com.deliciouspizza.dto.geocode.DirectionsResponseDto;
 import com.deliciouspizza.dto.geocode.GeocodeSearchResponseDto;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
@@ -17,6 +18,9 @@ import java.util.logging.Logger;
 public class OpenRouteService {
 
     private static final Logger logger = Logger.getLogger(OpenRouteService.class.getName());
+
+    private static final double METERS_IN_KILOMETER = 1000.0;
+    private static final double AVERAGE_CAR_SPEED = 50;
 
     private final WebClient webClient;
     private final String apiKey;
@@ -49,22 +53,26 @@ public class OpenRouteService {
                         .queryParam("api_key", apiKey)
                         .queryParam("text", address)
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(GeocodeSearchResponseDto.class)
                 .map(response -> {
                     List<Double> resultCoordinates = new ArrayList<>();
-
                     if (response != null && response.getFeatures() != null && !response.getFeatures().isEmpty()) {
                         GeocodeSearchResponseDto.Geometry geometry = response.getFeatures().getFirst().getGeometry();
                         if (geometry != null && geometry.getCoordinates() != null && geometry.getCoordinates().size() == 2) {
                             resultCoordinates = geometry.getCoordinates();
                         }
                     }
-
                     return resultCoordinates;
                 })
-                .doOnError(e -> logger.severe("Error geocoding address '" + address + "': " + e.getMessage()))
+                .doOnError(e -> {
+                    if (e instanceof WebClientResponseException) {
+                        WebClientResponseException ex = (WebClientResponseException) e;
+                        logger.severe("Error geocoding address '" + address + "'. Status: " + ex.getStatusCode() + ". Body: " + ex.getResponseBodyAsString());
+                    } else {
+                        logger.severe("Error geocoding address '" + address + "': " + e.getMessage());
+                    }
+                })
                 .defaultIfEmpty(Collections.emptyList());
     }
 
@@ -76,40 +84,46 @@ public class OpenRouteService {
      * @param endCoordinates   [longitude, latitude] of the end point.
      * @return A Mono emitting the distance in meters, or 0.0 if calculation fails.
      */
-    public Mono<Double> getDistance(List<Double> startCoordinates, List<Double> endCoordinates) {
+    public Mono<CalculatedDistance> getDistance(List<Double> startCoordinates, List<Double> endCoordinates) {
         if (startCoordinates == null || startCoordinates.size() != 2 || endCoordinates == null || endCoordinates.size() != 2) {
             logger.warning("Invalid coordinates provided for distance calculation.");
-            return Mono.just(0.0);
+            return Mono.just( new CalculatedDistance(0.0, 0.0));
         }
 
-        String coordinatesString = String.format("%s,%s|%s,%s",
-                startCoordinates.getFirst(), startCoordinates.get(1),
-                endCoordinates.getFirst(), endCoordinates.get(1));
+        String startString = String.format(java.util.Locale.US, "%.7f,%.7f", startCoordinates.get(0), startCoordinates.get(1));
+        String endString = String.format(java.util.Locale.US, "%.7f,%.7f", endCoordinates.get(0), endCoordinates.get(1));
 
-        logger.info("Calculating distance between: " + coordinatesString);
+        logger.info("Calculating distance between: " + startString + " and " + endString);
 
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path(directionsPath)
                         .queryParam("api_key", apiKey)
-                        .queryParam("start", startCoordinates.getFirst() + "," + startCoordinates.get(1))
-                        .queryParam("end", endCoordinates.getFirst() + "," + endCoordinates.get(1))
+                        .queryParam("start", startString)
+                        .queryParam("end", endString)
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
                 .bodyToMono(DirectionsResponseDto.class)
                 .map(response -> {
-                    if (response != null && response.getRoutes() != null && !response.getRoutes().isEmpty()) {
-                        DirectionsResponseDto.Summary summary = response.getRoutes().getFirst().getSummary();
+                    if (response != null && response.getFeatures() != null && !response.getFeatures().isEmpty()) {
+                        DirectionsResponseDto.Summary summary = response.getFeatures().getFirst().getProperties().getSummary();
                         if (summary != null && summary.getDistance() != null) {
-                            return summary.getDistance();
+                            return new CalculatedDistance(
+                                    summary.getDistance() / METERS_IN_KILOMETER,
+                                    summary.getDuration() / AVERAGE_CAR_SPEED
+                            );
                         }
                     }
-                    return 0.0; // Return 0.0 if no distance found
+                    return new CalculatedDistance(0.0, 0.0);
                 })
-                .doOnError(e -> logger.severe("Error calculating distance: " + e.getMessage()))
-                .defaultIfEmpty(0.0);
+                .doOnError(e -> {
+                    if (e instanceof WebClientResponseException) {
+                        WebClientResponseException ex = (WebClientResponseException) e;
+                        System.out.println("Error calculating distance. Status: " + ex.getStatusCode() + ". Body: " + ex.getResponseBodyAsString());
+                    } else {
+                        System.out.println("Error calculating distance: " + e.getMessage());
+                    }
+                })
+                .defaultIfEmpty( new CalculatedDistance(0.0, 0.0));
     }
-
-
 }
