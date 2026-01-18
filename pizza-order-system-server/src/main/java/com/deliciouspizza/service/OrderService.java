@@ -433,7 +433,7 @@ public class OrderService {
         CalculatedDistance calculatedDistance = new CalculatedDistance();
 
         try {
-            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates(employeeAddress);
+            Mono<List<Double>> employeeCoordsMono = openRouteService.getCoordinates("БЛ. 60 СТУДЕНТСКИ ГРАД");
             Mono<List<Double>> orderCoordsMono = openRouteService.getCoordinates(orderAddress);
 
             List<Double> employeeCoordinates = employeeCoordsMono.block();
@@ -441,7 +441,12 @@ public class OrderService {
 
             if (employeeCoordinates != null && employeeCoordinates.size() == 2 &&
                     orderCoordinates != null && orderCoordinates.size() == 2) {
-                calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
+
+                try {
+                    calculatedDistance = openRouteService.getDistance(employeeCoordinates, orderCoordinates).block();
+                } catch (Exception e) {
+                    
+                }
 
                 logger.info(String.format("Calculated distance for order %d: %.2f meters", orderId, calculatedDistance.getDistance()));
             } else {

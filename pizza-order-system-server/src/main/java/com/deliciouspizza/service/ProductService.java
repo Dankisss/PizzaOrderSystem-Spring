@@ -107,7 +107,7 @@ public class ProductService {
                     productInputDto.getPrice(),
                     productInputDto.isActive(),
                     productInputDto.getTotalAmount(),
-                    productInputDto.getAlcoholic()
+                    productInputDto.getAlcoholic() == null
             );
             default ->
                     throw new InvalidProductException("Product from category is invalid: " + productInputDto.getCategory());
